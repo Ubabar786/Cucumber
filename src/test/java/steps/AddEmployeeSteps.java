@@ -2,6 +2,7 @@ package steps;
 
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.junit.Assert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import utils.CommonMethods;
@@ -56,6 +57,7 @@ public class AddEmployeeSteps extends CommonMethods {
         sendText(addEmployeePage.middleNameLoc, middleN);
         sendText(addEmployeePage.lastNameLoc, lastN);
     }
+
     @When("user enters {string} and {string} and enters {string}")
     public void user_enters_and_and_enters(String firstN, String middleN, String lastN) {
         //WebElement firstNameField = driver.findElement(By.id("firstName"));
@@ -66,46 +68,70 @@ public class AddEmployeeSteps extends CommonMethods {
         sendText(addEmployeePage.middleNameLoc, middleN);
         sendText(addEmployeePage.lastNameLoc, lastN);
     }
-        @When("user adds multiple employees from excel using {string} and verify them")
-        public void user_adds_multiple_employees_from_excel_using_and_verify_them
-        (String sheetName) throws InterruptedException {
-            List<Map<String, String>> newEmployees=
-                    ExcelReader.read(sheetName, Constants.TESTDATA_FILEPATH);
 
-            //from the list of maps, we need one map at one point of time
-            //this iterator will give me one map to add one employee
-            Iterator<Map<String, String>> itr = newEmployees.iterator();
-            //it checks whether we have values or not
-            while (itr.hasNext()){
-                //it will return the keys and the values of the map which we store in this variable
-                Map<String, String> employeeMap=itr.next();
-                sendText(addEmployeePage.firstNameLoc, employeeMap.get("firstName"));
-                sendText(addEmployeePage.middleNameLoc, employeeMap.get("middleName"));
-                sendText(addEmployeePage.lastNameLoc, employeeMap.get("lastName"));
-                sendText(addEmployeePage.photoGraph, employeeMap.get("Photograph"));
-                if(!addEmployeePage.checkBox.isSelected()){
-                    click(addEmployeePage.checkBox);
-                }
-                sendText(addEmployeePage.usernameEmp, employeeMap.get("Username"));
-                sendText(addEmployeePage.passwordEmp, employeeMap.get("Password"));
-                sendText(addEmployeePage.confirmPassword, employeeMap.get("confirmPassword"));
-                click(addEmployeePage.saveBtn);
-                Thread.sleep(2000);
+    @When("user adds multiple employees from excel using {string} and verify them")
+    public void user_adds_multiple_employees_from_excel_using_and_verify_them
+            (String sheetName) throws InterruptedException {
+        List<Map<String, String>> newEmployees =
+                ExcelReader.read(sheetName, Constants.TESTDATA_FILEPATH);
 
-                //because we want to add many employees
-                click(dashboardPage.addEmpOption);
+        //from the list of maps, we need one map at one point of time
+        //this iterator will give me one map to add one employee
+        Iterator<Map<String, String>> itr = newEmployees.iterator();
+        //it checks whether we have values or not
+        while (itr.hasNext()) {
+            //it will return the keys and the values of the map which we store in this variable
+            Map<String, String> employeeMap = itr.next();
+            sendText(addEmployeePage.firstNameLoc, employeeMap.get("firstName"));
+            sendText(addEmployeePage.middleNameLoc, employeeMap.get("middleName"));
+            sendText(addEmployeePage.lastNameLoc, employeeMap.get("lastName"));
+            sendText(addEmployeePage.photoGraph, employeeMap.get("Photograph"));
+            if (!addEmployeePage.checkBox.isSelected()) {
+                click(addEmployeePage.checkBox);
+            }
+            sendText(addEmployeePage.usernameEmp, employeeMap.get("Username"));
+            sendText(addEmployeePage.passwordEmp, employeeMap.get("Password"));
+            sendText(addEmployeePage.confirmPassword, employeeMap.get("confirmPassword"));
+            //we are storing the emp ID from the locator
+            String empIdValue = addEmployeePage.employeeIdLocator.getAttribute("value");
+            click(addEmployeePage.saveBtn);
+            Thread.sleep(2000);
 
-                Thread.sleep(2000);
-                //verification of employee still pending
+            //because we want to add many employees
+            click(dashboardPage.empListOption);
+            //we need to search the employee by the stored employee id
+            sendText(employeeSearchPage.empSearchIDField, empIdValue);
+            click(employeeSearchPage.searchBtn);
 
+            //after searching the employee, it returns the info in format
+            //empId firstName middleName and lastName this is the format
+            List<WebElement> rowData =
+                    driver.findElements(By.xpath("//table[@id='resultTable']/tbody/tr"));
+
+            for (int i = 0; i < rowData.size(); i++) {
+                //it will give me the data from all the cell of the row
+                String rowText = rowData.get(i).getText();
+                System.out.println(rowText);
+                //we are getting from excel to compare with web table data
+                String expectedDataFromExcel = empIdValue + " " + employeeMap.get("firstName") + " " + employeeMap.get("middleName") + " " + employeeMap.get("lastName");
+                System.out.println(expectedDataFromExcel);
+                Assert.assertEquals(expectedDataFromExcel, rowText);
             }
 
+            //because we want to add many employee
+            click(dashboardPage.addEmpOption);
+            Thread.sleep(2000);
+            //verification of employee still pending
+
         }
+
+    }
+
     @When("user adds multiple employees from data table")
     public void user_adds_multiple_employees_from_data_table
             (io.cucumber.datatable.DataTable dataTable) throws InterruptedException {
         List<Map<String, String>> employeeNames = dataTable.asMaps();
-        for(Map<String, String> map:employeeNames){
+        for (Map<String, String> map : employeeNames) {
             sendText(addEmployeePage.firstNameLoc, map.get("firstName"));
             sendText(addEmployeePage.middleNameLoc, map.get("middleName"));
             sendText(addEmployeePage.lastNameLoc, map.get("lastName"));

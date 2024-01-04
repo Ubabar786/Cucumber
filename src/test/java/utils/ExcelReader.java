@@ -20,7 +20,7 @@ public class ExcelReader {
             fileInputStream = new FileInputStream(path);
             // that special call which knows how to read the data from excel files
             XSSFWorkbook xssfWorkbook = new XSSFWorkbook(fileInputStream);
-            Sheet sheet = xssfWorkbook.getSheet("Sheet1cd");
+            Sheet sheet = xssfWorkbook.getSheet("Sheet1");
             //this row is just for keys
             Row headerRow = sheet.getRow(0);
             //for row, we take 1 index because 0 is already used for headers
